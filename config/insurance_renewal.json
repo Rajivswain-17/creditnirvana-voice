@@ -1,0 +1,55 @@
+{
+  "botKey": "insurance_renewal",
+  "brand": "CreditNirvana",
+  "agentName": "Rohit",
+  "customerName": "Ambuj Pratap Jain",
+  "promptFile": "prompts/insurance_renewal.md",
+  "money": {
+    "currency": "INR",
+    "idvCurrent": 900000,
+    "idvRenewal": 800000,
+    "premiumCurrent": 20000,
+    "premiumRenewal": 15000,
+    "totalOutstanding": 15000,
+    "offerValidTill": "2026-11-05"
+  },
+  "vehicle": {
+    "make": "Maruti Suzuki",
+    "model": "Brezza",
+    "policyType": "Comprehensive"
+  },
+  "allowedCommitmentAmounts": [15000],
+  "paymentModes": ["upi", "neft", "imps", "card", "bank_transfer"],
+  "callWindow": {
+    "startHour": 8,
+    "endHour": 19,
+    "timezone": "Asia/Kolkata"
+  },
+  "objections": [
+    { "type": "price_online_cheaper", "triggers": ["online sasta", "cheaper online", "policybazaar", "acko", "digit", "website pe", "online quote"] },
+    { "type": "competitor_quote", "triggers": ["dusri company", "other company", "quote mila", "hdfc ergo", "icici lombard", "bajaj allianz"] },
+    { "type": "idv_drop", "triggers": ["idv kam", "idv kyun", "value kam", "depreciation"] },
+    { "type": "no_claim_bonus", "triggers": ["ncb", "no claim", "bonus"] },
+    { "type": "not_needed", "triggers": ["nahi chahiye", "not interested", "renew nahi", "car bech"] },
+    { "type": "callback", "triggers": ["baad mein call", "call later", "busy", "soch ke"] },
+    { "type": "addon_question", "triggers": ["zero dep", "engine", "rsa", "roadside", "addon", "cover"] },
+    { "type": "already_renewed", "triggers": ["renew kar liya", "already renewed", "policy ho gayi"] }
+  ],
+  "escalation": {
+    "slaHours": 4,
+    "reasons": [
+      "caller_requested_senior",
+      "claim_in_progress",
+      "price_dispute",
+      "wrong_party",
+      "abusive_caller"
+    ]
+  },
+  "commitmentPolicy": {
+    "requireRightParty": false,
+    "onePerCall": false,
+    "minDaysFromToday": 0,
+    "maxDaysAfterOffer": 0,
+    "sundaysAllowed": true
+  }
+}

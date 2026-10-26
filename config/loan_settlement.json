@@ -1,0 +1,54 @@
+{
+  "botKey": "loan_settlement",
+  "brand": "CreditNirvana",
+  "agentName": "Rohit",
+  "customerName": "Ambuj Pratap Jain",
+  "promptFile": "prompts/loan_settlement.md",
+  "money": {
+    "currency": "INR",
+    "principalDue": 400000,
+    "interestDue": 200000,
+    "otherCharges": 50000,
+    "totalOutstanding": 650000,
+    "settlementOffer": 400000,
+    "offerValidTill": "2026-10-31",
+    "daysOverdue": 240
+  },
+  "allowedCommitmentAmounts": [400000, 650000],
+  "paymentModes": ["upi", "neft", "imps", "bank_transfer"],
+  "callWindow": {
+    "startHour": 8,
+    "endHour": 19,
+    "timezone": "Asia/Kolkata"
+  },
+  "objections": [
+    { "type": "affordability", "triggers": ["nahi hai", "afford", "paisa nahi", "koi income nahi", "job chali gayi", "no money", "cannot pay", "can't pay"] },
+    { "type": "dispute_amount", "triggers": ["galat hai", "sahi nahi", "wrong amount", "itna nahi tha", "dispute", "already paid", "pehle de diya"] },
+    { "type": "wrong_party", "triggers": ["galat number", "koi rajiv nahi", "he is not here", "unka bhai", "main unka", "no such person", "wo ghar par nahi"] },
+    { "type": "legal_threat", "triggers": ["court", "police", "fir", "case kar", "vakil", "lawyer", "complaint", "consumer forum", "rbi"] },
+    { "type": "recording_objection", "triggers": ["record mat", "recording band", "record na", "why are you recording", "recording kyun"] },
+    { "type": "callback", "triggers": ["baad mein call", "call later", "abhi busy", "meeting mein", "call me tomorrow", "shaam ko call"] },
+    { "type": "settlement_negotiation", "triggers": ["settlement", "kam karo", "discount", "waive", "reduce", "kuch kam"] },
+    { "type": "hardship_medical", "triggers": ["hospital", "medical", "bimari", "ilaj", "accident"] },
+    { "type": "self_harm_risk", "triggers": ["suicide", "jaan de", "marna", "khatam kar", "end my life"] }
+  ],
+  "escalation": {
+    "slaHours": 2,
+    "reasons": [
+      "caller_threatened_legal_action",
+      "caller_requested_senior",
+      "amount_dispute",
+      "hardship_medical",
+      "self_harm_risk",
+      "abusive_caller",
+      "identity_unverified"
+    ]
+  },
+  "commitmentPolicy": {
+    "requireRightParty": true,
+    "onePerCall": true,
+    "minDaysFromToday": 0,
+    "maxDaysAfterOffer": 0,
+    "sundaysAllowed": false
+  }
+}
