@@ -35,7 +35,10 @@ toolsRouter.post("/escalate", escalate);
 async function logCommitment(req: Request, res: Response): Promise<void> {
   const startedAt = Date.now();
   const store = createStore();
-  const { meta, args } = unwrapTool(req.body);
+  const { meta, args: bodyArgs } = unwrapTool(req.body);
+  // Sarvam sends tool arguments either in the JSON body or as query params,
+  // depending on which tab the tool was configured on. Accept both.
+  const args = { ...(req.query as Record<string, unknown>), ...bodyArgs };
 
   const botKey = resolveBotKey(req.params.botKey, req.query.bot, args.bot_key);
   const config = loadBotConfig(botKey);
@@ -175,7 +178,8 @@ async function logCommitment(req: Request, res: Response): Promise<void> {
 async function escalate(req: Request, res: Response): Promise<void> {
   const startedAt = Date.now();
   const store = createStore();
-  const { args } = unwrapTool(req.body);
+  const { args: bodyArgs } = unwrapTool(req.body);
+  const args = { ...(req.query as Record<string, unknown>), ...bodyArgs };
 
   const botKey = resolveBotKey(req.params.botKey, req.query.bot, args.bot_key);
   const config = loadBotConfig(botKey);
