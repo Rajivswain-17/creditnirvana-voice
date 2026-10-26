@@ -194,6 +194,11 @@ async function escalate(req: Request, res: Response): Promise<void> {
   const interactionId = resolveInteractionId(args, fallbackKey);
 
   const ticket = `ESC-${istToday().replace(/-/g, "")}-${randomUUID().slice(0, 6).toUpperCase()}`;
+  // Nobody can follow "ESC-20261026-9F3A1C" read aloud. Speak four digits and
+  // keep the full ticket for the CRM.
+  const spokenReference = String(
+    1000 + (parseInt(randomUUID().replace(/-/g, "").slice(0, 6), 16) % 9000),
+  );
 
   await store.createEscalation({
     interactionId,
@@ -206,12 +211,16 @@ async function escalate(req: Request, res: Response): Promise<void> {
     ok: true,
     result: "accepted",
     ticket,
+    spoken_reference: spokenReference,
     reason,
     sla_hours: config.escalation.slaHours,
     message:
       `Escalation ${ticket} logged. A senior will call within ${config.escalation.slaHours} hours. ` +
-      "Do not promise a different amount or a different timeline. Tell the caller the ticket number and end the call politely.",
-    speak: `Main isko senior ko de raha hoon, aapko ${config.escalation.slaHours} ghante mein call aayega. Aapka reference ${ticket} hai.`,
+      `Read only the four digit reference ${spokenReference} to the caller, never the full ticket. ` +
+      "Do not promise a different amount or a different timeline. Then end the call politely.",
+    speak:
+      `Main isko senior ko de raha hoon, aapko ${config.escalation.slaHours} ghante mein call aayega. ` +
+      `Aapka reference number ${spokenReference} hai.`,
   };
 
   await store.logToolCall({
