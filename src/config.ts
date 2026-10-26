@@ -117,6 +117,23 @@ export function allowedFacts(config: BotConfig): number[] {
  */
 export function defaultVariables(config: BotConfig, today: string): Record<string, string> {
   const money = config.money;
+
+  // Insurance expects a different variable contract than collections. Same
+  // endpoint, different shape, decided by the config file.
+  if (config.vehicle) {
+    return {
+      customer_name: config.customerName ?? "",
+      vehicle_make: config.vehicle.make,
+      vehicle_model: config.vehicle.model,
+      policy_expiry: money.offerValidTill ?? "",
+      idv_current: String(money.idvCurrent ?? 0),
+      idv_renewal: String(money.idvRenewal ?? 0),
+      premium_current: String(money.premiumCurrent ?? 0),
+      premium_renewal: String(money.premiumRenewal ?? 0),
+      current_date: today,
+    };
+  }
+
   return {
     customer_name: config.customerName ?? "Rajiv",
     principal_due: String(money.principalDue ?? 0),

@@ -1,4 +1,4 @@
-{
+﻿{
   "botKey": "insurance_renewal",
   "brand": "CreditNirvana",
   "agentName": "Rohit",
@@ -18,7 +18,7 @@
     "model": "Brezza",
     "policyType": "Comprehensive"
   },
-  "allowedCommitmentAmounts": [15000],
+  "allowedCommitmentAmounts": [15000, 20000],
   "paymentModes": ["upi", "neft", "imps", "card", "bank_transfer"],
   "callWindow": {
     "startHour": 8,
