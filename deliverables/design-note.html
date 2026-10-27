@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Design Note — CreditNirvana Voice Agents</title>
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: #e9edf2; padding: 18px;
+    font-family: "Segoe UI", -apple-system, system-ui, sans-serif;
+    color: #10151c; -webkit-font-smoothing: antialiased;
+  }
+  .page {
+    width: 794px; background: #fff; margin: 0 auto; padding: 26px 30px 22px;
+    box-shadow: 0 2px 14px rgba(16,21,28,.12);
+  }
+  h1 { font-size: 19px; margin: 0 0 2px; letter-spacing: -.2px; }
+  .sub { font-size: 11px; color: #5b6672; margin-bottom: 14px; }
+  .rule { height: 3px; background: linear-gradient(90deg,#0b6b53,#1aa07a 55%,#cfe6df); border-radius: 2px; margin-bottom: 16px; }
+  h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .09em; color: #0b6b53; margin: 18px 0 7px; }
+
+  .flow { display: flex; align-items: stretch; gap: 8px; }
+  .box {
+    border: 1.4px solid #c4ced9; border-radius: 7px; padding: 8px 9px; background: #fbfcfd;
+    flex: 1; min-width: 0;
+  }
+  .box .t { font-size: 11.5px; font-weight: 700; margin-bottom: 2px; }
+  .box .d { font-size: 10px; color: #4f5b68; line-height: 1.35; }
+  .box.own { border-color: #0b6b53; background: #f2faf7; }
+  .box.own .t { color: #0b6b53; }
+  .box.warn { border-color: #b8862b; background: #fdf8ec; }
+  .box.warn .t { color: #8a6116; }
+  .arrow { align-self: center; font-size: 15px; color: #7b8794; flex: 0 0 auto; }
+  .vsep { text-align: center; font-size: 15px; color: #7b8794; margin: 4px 0; line-height: 1; }
+
+  .two { display: flex; gap: 12px; }
+  .two > div { flex: 1; min-width: 0; }
+
+  .ladder { display: flex; align-items: center; gap: 6px; margin: 2px 0 6px; }
+  .step {
+    border-radius: 6px; padding: 7px 9px; font-size: 10.5px; line-height: 1.25;
+    border: 1.3px solid #c4ced9; background: #fbfcfd; flex: 1; min-width: 0;
+  }
+  .step b { display: block; font-size: 11.5px; margin-bottom: 1px; }
+  .step.g { border-color: #0b6b53; background: #f2faf7; }
+  .step.r { border-color: #b23b3b; background: #fdf3f3; }
+  .step .tag { font-size: 9px; color: #5b6672; text-transform: uppercase; letter-spacing: .05em; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 9.7px; }
+  th { text-align: left; background: #f2f5f8; color: #33404d; font-size: 9px; text-transform: uppercase; letter-spacing: .05em; padding: 4px 6px; border-bottom: 1.2px solid #d5dee7; }
+  td { padding: 3.5px 6px; border-bottom: 1px solid #e7ecf1; vertical-align: top; line-height: 1.3; }
+  td strong { color: #10151c; }
+  .no { color: #b23b3b; font-weight: 600; }
+
+  ul { margin: 2px 0 0; padding-left: 15px; font-size: 10px; line-height: 1.45; color: #33404d; }
+  li { margin-bottom: 2px; }
+  .foot { margin-top: 14px; padding-top: 8px; border-top: 1px solid #e2e8ee; font-size: 9.2px; color: #6b7684; display: flex; justify-content: space-between; }
+  .kv { font-size: 10px; line-height: 1.5; color: #33404d; }
+  .kv b { color: #10151c; }
+
+  @media print {
+    body { background: #fff; padding: 0; }
+    .page { box-shadow: none; width: auto; padding: 8mm 9mm 0; }
+    h2 { margin: 12px 0 6px; }
+    .foot { margin-top: 10px; }
+    table { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1>Two Voice Agents — Design &amp; Objection Handling</h1>
+  <div class="sub">Rajiv Swain &nbsp;·&nbsp; Prompt Engineer Intern, Voice &amp; Agentic AI &nbsp;·&nbsp; Sarvam AI + custom guardrail API</div>
+  <div class="rule"></div>
+
+  <h2>The core decision: conversation in Sarvam, limits in code</h2>
+  <div class="flow">
+    <div class="box">
+      <div class="t">Caller</div>
+      <div class="d">Speaks Hinglish, interrupts, changes language mid-sentence</div>
+    </div>
+    <div class="arrow">&#8596;</div>
+    <div class="box">
+      <div class="t">Sarvam AI</div>
+      <div class="d">Speech recognition &rarr; LLM &rarr; voice. Barge-in, silence nudges, language switching</div>
+    </div>
+    <div class="arrow">&#8596;</div>
+    <div class="box own">
+      <div class="t">My API</div>
+      <div class="d">Facts, allowlists, date checks, tickets, post-call audit</div>
+    </div>
+  </div>
+  <div class="vsep">&#8595;</div>
+  <div class="flow">
+    <div class="box own">
+      <div class="t">1 &nbsp;/on-start</div>
+      <div class="d">Fills variables before the first sentence. The prompt holds no hardcoded rupee figure</div>
+    </div>
+    <div class="box own">
+      <div class="t">2 &nbsp;/log-commitment</div>
+      <div class="d">Amount must be on the allowlist. Date must be a real date. &ldquo;Agle hafte&rdquo; is refused</div>
+    </div>
+    <div class="box own">
+      <div class="t">3 &nbsp;/escalate</div>
+      <div class="d">Ticket plus a four digit reference. Selling stops</div>
+    </div>
+    <div class="box own">
+      <div class="t">4 &nbsp;/webhook</div>
+      <div class="d">Transcript &rarr; objections tagged, compliance findings, score</div>
+    </div>
+  </div>
+  <div class="kv" style="margin-top:8px"><b>Why:</b> the model negotiates, the API refuses to record anything unauthorised. A bad commitment is <span class="no">rejected</span> with a correction the agent must speak, and the transcript is audited afterwards for anything said without approval.</div>
+
+  <h2>Bot 1 — loan settlement: avoidance vs hardship</h2>
+  <div class="ladder">
+    <div class="step g"><span class="tag">open</span><b>&#8377;6,50,000</b>Dues stated, breakdown only if asked</div>
+    <div class="arrow">&rarr;</div>
+    <div class="step"><span class="tag">avoidance</span><b>Repeated excuse</b>Salary delay, already paid, dispute</div>
+    <div class="arrow">&rarr;</div>
+    <div class="step"><span class="tag">route</span><b>Avoidance or hardship?</b>Avoidance: return to date. Hardship: affordability</div>
+    <div class="arrow">&rarr;</div>
+    <div class="step"><span class="tag">pressure</span><b>Consequences</b>Recovery notice, arbitration, CIBIL</div>
+    <div class="arrow">&rarr;</div>
+    <div class="step g"><span class="tag">close</span><b>&#8377;4,00,000 + date</b>Logged only if valid</div>
+  </div>
+  <div class="kv">Firm, not abusive: no police, no jail, no third-party disclosure. Avoidance gets a firm redirect to date and amount; genuine hardship gets an affordability conversation; a disputed payment goes to verification rather than repeated pressure.</div>
+
+  <h2>Bot 2 — insurance renewal: the price ladder</h2>
+  <div class="ladder">
+    <div class="step g"><span class="tag">open</span><b>&#8377;20,000</b>IDV 9L &rarr; 8L, expiry 5 Nov</div>
+    <div class="arrow">&rarr;</div>
+    <div class="step"><span class="tag">objection</span><b>&ldquo;Zyada hai&rdquo;</b>Only now is the concession unlocked</div>
+    <div class="arrow">&rarr;</div>
+    <div class="step g"><span class="tag">concede once</span><b>&#8377;15,000</b>Tied to confirming today</div>
+    <div class="arrow">&rarr;</div>
+    <div class="step r"><span class="tag">below floor</span><b>&#8377;12,000 request</b>Rejected. Minimum authorised is &#8377;15,000</div>
+  </div>
+  <div class="kv">The brief asks for the <b>highest achievable value</b>, so the ladder is the design: the standard premium first, the authorised discount as a conditioned concession, and never below it.</div>
+
+  <h2>Objection handling — same four steps, both bots</h2>
+  <table>
+    <tr>
+      <th style="width:15%">Step</th><th style="width:42%">What the agent does</th><th style="width:43%">Example</th>
+    </tr>
+    <tr><td><strong>1 Acknowledge</strong></td><td>One short clause, no agreement</td><td>&ldquo;Samajh raha hoon, par yeh 8 mahine se pending hai.&rdquo;</td></tr>
+    <tr><td><strong>2 Reframe</strong></td><td>Change what is being compared</td><td>&ldquo;Online quote ka IDV, cover aur deductible same hain? Pehle like-for-like compare karein.&rdquo;</td></tr>
+    <tr><td><strong>3 One move</strong></td><td>Concede once, or restate the floor</td><td>&ldquo;Aaj confirm karein to 15,000.&rdquo; &nbsp;·&nbsp; &ldquo;4 lakh se neeche approval nahi.&rdquo;</td></tr>
+    <tr><td><strong>4 Ask</strong></td><td>Demand a date or a decision</td><td>&ldquo;Kaunsi date?&rdquo; &nbsp;·&nbsp; &ldquo;Link bhej doon?&rdquo;</td></tr>
+  </table>
+  <div class="two" style="margin-top:8px">
+    <div>
+      <div class="kv" style="margin-bottom:3px"><b>Loan — objections covered</b></div>
+      <ul>
+        <li>Salary delay · job loss · medical</li>
+        <li>&ldquo;Already paid&rdquo; · amount dispute</li>
+        <li>Second lender · how did you get this number</li>
+        <li>Recording the call · EMI request · principal only</li>
+      </ul>
+    </div>
+    <div>
+      <div class="kv" style="margin-bottom:3px"><b>Insurance — objections covered</b></div>
+      <ul>
+        <li>Online cheaper · competitor quote</li>
+        <li>IDV drop · no claim bonus</li>
+        <li>Add-on questions · not needed</li>
+        <li>Call later · already renewed</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>Compliance decisions</h2>
+  <table>
+    <tr><th style="width:34%">Risk</th><th>How it is prevented</th></tr>
+    <tr><td>Agent invents a number</td><td>Amounts validated in code; unauthorised figures rejected before the agent can confirm</td></tr>
+    <tr><td>Vague commitment</td><td>&ldquo;Agle hafte&rdquo;, &ldquo;month end&rdquo;, &ldquo;agle shukravar&rdquo; rejected until a real date is named</td></tr>
+    <tr><td>Threats</td><td>Legal consequences stated factually; no police, jail or public shaming in the prompt</td></tr>
+    <tr><td>Wrong person told the dues</td><td>Identity gate sits before any amount, IDV or premium</td></tr>
+    <tr><td>Add-on price invented</td><td>Explicit rule: no add-on figure unless it exists; offer a quote instead</td></tr>
+    <tr><td>Self-harm mention</td><td>Mandatory escalation with ticket, selling stops immediately</td></tr>
+    <tr><td>Silent or abusive caller</td><td>Nudge at 8s and 11s, then hang up; abusive caller escalated, never matched</td></tr>
+  </table>
+
+  <div class="foot">
+    <span>Next: Postgres persistence behind the same store interface, and a review queue for calls scored below threshold.</span>
+    <span>creditnirvana-voice.onrender.com</span>
+  </div>
+
+</div>
+</body>
+</html>
