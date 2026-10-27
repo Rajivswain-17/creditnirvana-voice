@@ -87,7 +87,11 @@ export function loadBotConfig(botKey: string): BotConfig {
   if (cached) return cached;
 
   const path = resolve(process.cwd(), "config", `${botKey}.json`);
-  const parsed = JSON.parse(readFileSync(path, "utf8")) as BotConfig;
+  // A config file saved by a Windows editor can carry a UTF-8 BOM, which
+  // JSON.parse rejects with "Unexpected token". Strip it rather than fail the
+  // whole call: one invisible byte should not take the agent offline.
+  const raw = readFileSync(path, "utf8").replace(/^\uFEFF/, "");
+  const parsed = JSON.parse(raw) as BotConfig;
 
   if (!parsed.money || typeof parsed.money.totalOutstanding !== "number") {
     throw new Error(`config/${botKey}.json is missing money.totalOutstanding`);

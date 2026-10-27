@@ -1,6 +1,6 @@
 import { Router, type Request, type Response } from "express";
-import { defaultVariables, loadBotConfig, resolveBotKey } from "../config.js";
-import { createStore } from "../db/store.js";
+import { defaultVariables, loadBotConfig, resolveBotKey, type BotConfig } from "../config.js";
+import { createStore, type CustomerRecord } from "../db/store.js";
 import { istToday } from "../lib/dates.js";
 import { pickString, unwrapTool } from "../lib/payload.js";
 import { hashPhone, last4, normalizePhone } from "../lib/phone.js";
@@ -61,21 +61,34 @@ async function handle(req: Request, res: Response): Promise<void> {
 
   console.info(`[on-start] ${botKey}: matched ***${last4(phone)} -> ${customer.name} (${Date.now() - startedAt}ms)`);
 
-  respond(
-    res,
-    {
-      customer_name: customer.name,
-      principal_due: String(customer.principalDue),
-      interest_due: String(customer.interestDue),
-      other_charges: String(customer.otherCharges),
-      total_outstanding: String(customer.totalOutstanding),
-      settlement_offer: String(customer.settlementOffer),
-      offer_valid_till: customer.offerValidTill ?? variables.offer_valid_till ?? "",
-      days_overdue: String(customer.daysOverdue),
-      current_date: today,
-    },
-    req.query.shape,
-  );
+  respond(res, withCustomer(config, variables, customer), req.query.shape);
+}
+
+/**
+ * A matched customer overrides only what the bot actually sells. Insurance has
+ * no principal or settlement, so it keeps its own variable contract and takes
+ * nothing but the name: a collections-shaped reply here would blank every IDV
+ * and premium variable the agent depends on.
+ */
+function withCustomer(
+  config: BotConfig,
+  variables: Record<string, string>,
+  customer: CustomerRecord,
+): Record<string, string> {
+  if (config.vehicle) {
+    return { ...variables, customer_name: customer.name };
+  }
+  return {
+    customer_name: customer.name,
+    principal_due: String(customer.principalDue),
+    interest_due: String(customer.interestDue),
+    other_charges: String(customer.otherCharges),
+    total_outstanding: String(customer.totalOutstanding),
+    settlement_offer: String(customer.settlementOffer),
+    offer_valid_till: customer.offerValidTill ?? variables.offer_valid_till ?? "",
+    days_overdue: String(customer.daysOverdue),
+    current_date: variables.current_date ?? "",
+  };
 }
 
 function respond(res: Response, variables: Record<string, string>, shape: unknown): void {
@@ -110,16 +123,5 @@ onStartRouter.get("/:botKey", async (req: Request, res: Response) => {
     return;
   }
 
-  res.json({
-    customer_name: customer.name,
-    principal_due: String(customer.principalDue),
-    interest_due: String(customer.interestDue),
-    other_charges: String(customer.otherCharges),
-    total_outstanding: String(customer.totalOutstanding),
-    settlement_offer: String(customer.settlementOffer),
-    offer_valid_till: customer.offerValidTill ?? "",
-    days_overdue: String(customer.daysOverdue),
-    current_date: today,
-    lookup: "found",
-  });
+  res.json({ ...withCustomer(config, defaultVariables(config, today), customer), lookup: "found" });
 });
