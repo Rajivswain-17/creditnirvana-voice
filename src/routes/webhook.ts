@@ -42,11 +42,24 @@ async function handle(req: Request, res: Response): Promise<void> {
   }
 
   const body = asObject(req.body);
+  const appBlock = asObject((body.app as unknown) ?? (body.application as unknown));
+  const deploymentBlock = asObject(body.deployment);
+  const metaBlock = asObject(body.metadata);
+  const inputBlock = asObject(
+    body.final_agent_variables ?? body.finalVariables ?? body.input_variables ?? {},
+  );
   const botKey = resolveBotKey(
     req.params.botKey,
     req.query.bot,
     pickString(body, ["bot_key"]),
-    pickString(body, ["app_name", "agent_name"]),
+    pickString(body, ["app_name", "agent_name", "application_name"]),
+    pickString(appBlock, ["name", "app_name"]),
+    pickString(deploymentBlock, ["agent_name", "name"]),
+    pickString(metaBlock, ["app_name", "agent_name"]),
+    // last resort: the variable contract only one bot uses
+    "vehicle_model" in inputBlock || "idv_current" in inputBlock || "premium_current" in inputBlock
+      ? "insurance_renewal"
+      : undefined,
   );
   const config = loadBotConfig(botKey);
   const store = createStore();
